@@ -3,7 +3,7 @@
 A Neovim plugin to integrate the Cursor AI agent CLI directly into your editor. Toggle a terminal running `cursor agent`
 with a simple keybinding and send visual selections for AI assistance.
 
-This was created using cursor.
+This was created using cursor 😊 basically to met my requirements of having a cursor agent in the CLI.
 
 
 ## Features
@@ -27,7 +27,7 @@ This was created using cursor.
 
 ```lua
 {
-  "somwwhere/neovim-cursor",
+  "felixcuello/neovim-cursor",
   config = function()
     require("neovim-cursor").setup()
   end,
@@ -38,7 +38,7 @@ This was created using cursor.
 
 ```lua
 use {
-  "yourusername/neovim-cursor",
+  "felixcuello/neovim-cursor",
   config = function()
     require("neovim-cursor").setup()
   end,
@@ -48,7 +48,7 @@ use {
 ### Using [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
-Plug 'yourusername/neovim-cursor'
+Plug 'felixcuello/neovim-cursor'
 
 lua << EOF
 require("neovim-cursor").setup()
@@ -60,7 +60,7 @@ EOF
 ### Basic Usage
 
 1. **Open/Toggle Terminal**: Press `<leader>ai` in normal mode to open a vertical split with the Cursor agent
-2. **Hide Terminal**: Press `<leader>ai` again to hide the terminal (keeps the session running)
+2. **Hide Terminal**: Press `<leader>ai` again to hide the terminal (keeps the session running), or press `<Esc>` while in the terminal
 3. **Show Terminal**: Press `<leader>ai` again to show the hidden terminal
 
 ### Visual Mode
