@@ -4,16 +4,16 @@ local M = {}
 M.defaults = {
   -- Keybinding for toggling cursor agent
   keybinding = "<leader>ai",
-  
+
   -- Terminal split configuration
   split = {
     position = "right",  -- right, left, top, bottom
     size = 0.5,          -- 50% of editor width/height
   },
-  
+
   -- CLI command to run
   command = "cursor agent",
-  
+
   -- Terminal options
   term_opts = {
     on_open = nil,   -- Callback when terminal opens

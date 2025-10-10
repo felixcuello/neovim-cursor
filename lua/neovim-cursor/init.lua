@@ -15,20 +15,20 @@ function M.visual_mode_handler()
   -- Get the current buffer and file path
   local buf = vim.api.nvim_get_current_buf()
   local filepath = vim.api.nvim_buf_get_name(buf)
-  
+
   -- Get visual selection
   local start_pos = vim.fn.getpos("'<")
   local end_pos = vim.fn.getpos("'>")
   local start_line = start_pos[2]
   local end_line = end_pos[2]
-  
+
   -- Get the selected lines
   local lines = vim.api.nvim_buf_get_lines(buf, start_line - 1, end_line, false)
   local selected_text = table.concat(lines, "\n")
-  
+
   -- Toggle the terminal (open if closed, show if hidden)
   terminal.toggle(config)
-  
+
   -- Wait a bit for terminal to be ready, then send text
   vim.defer_fn(function()
     if terminal.is_running() then
@@ -43,13 +43,13 @@ end
 function M.setup(user_config)
   -- Merge user config with defaults
   config = config_module.setup(user_config)
-  
+
   -- Set up keybindings
   vim.keymap.set("n", config.keybinding, M.normal_mode_handler, {
     desc = "Toggle Cursor Agent terminal",
     silent = true,
   })
-  
+
   vim.keymap.set("v", config.keybinding, function()
     -- Exit visual mode before processing
     local esc = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
@@ -60,14 +60,14 @@ function M.setup(user_config)
     desc = "Toggle Cursor Agent terminal and send selection",
     silent = true,
   })
-  
+
   -- Create user command
   vim.api.nvim_create_user_command("CursorAgent", function()
     terminal.toggle(config)
   end, {
     desc = "Toggle Cursor Agent terminal",
   })
-  
+
   -- Create command to send text manually
   vim.api.nvim_create_user_command("CursorAgentSend", function(opts)
     if terminal.is_running() then

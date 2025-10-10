@@ -23,13 +23,13 @@ function M.is_running()
   if not is_buffer_valid() then
     return false
   end
-  
+
   -- Check if job is still running
   if state.job_id then
     local job_info = vim.fn.jobwait({state.job_id}, 0)
     return job_info[1] == -1  -- -1 means still running
   end
-  
+
   return false
 end
 
@@ -41,12 +41,17 @@ local function hide()
   end
 end
 
+-- Expose hide function for keymaps
+function M.hide()
+  hide()
+end
+
 -- Show the terminal window
 local function show(config)
   if not is_buffer_valid() then
     return false
   end
-  
+
   -- Calculate split size
   local size
   if config.split.position == "right" or config.split.position == "left" then
@@ -54,7 +59,7 @@ local function show(config)
   else
     size = math.floor(vim.o.lines * config.split.size)
   end
-  
+
   -- Create the split
   local split_cmd
   if config.split.position == "right" then
@@ -66,18 +71,18 @@ local function show(config)
   else  -- bottom
     split_cmd = "rightbelow split"
   end
-  
+
   vim.cmd(split_cmd)
   state.win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.win, state.buf)
-  
+
   -- Set window size
   if config.split.position == "right" or config.split.position == "left" then
     vim.api.nvim_win_set_width(state.win, size)
   else
     vim.api.nvim_win_set_height(state.win, size)
   end
-  
+
   return true
 end
 
@@ -85,10 +90,10 @@ end
 local function create(config)
   -- Create a new buffer
   state.buf = vim.api.nvim_create_buf(false, true)
-  
+
   -- Show the window
   show(config)
-  
+
   -- Start the terminal
   state.job_id = vim.fn.termopen(config.command, {
     on_exit = function(_, exit_code, _)
@@ -99,17 +104,24 @@ local function create(config)
       end
       state.buf = nil
       state.win = nil
-      
+
       -- Call user callback if provided
       if config.term_opts.on_close then
         config.term_opts.on_close(exit_code)
       end
     end,
   })
-  
+
+  -- Set up buffer-local keymaps for terminal mode
+  vim.api.nvim_buf_set_keymap(state.buf, 't', '<Esc>', '<C-\\><C-n>:lua require("neovim-cursor.terminal").hide()<CR>', {
+    noremap = true,
+    silent = true,
+    desc = "Exit terminal window"
+  })
+
   -- Enter insert mode in terminal
   vim.cmd("startinsert")
-  
+
   -- Call user callback if provided
   if config.term_opts.on_open then
     config.term_opts.on_open()
@@ -137,7 +149,7 @@ function M.send_text(text)
     vim.notify("Cursor agent terminal is not running", vim.log.levels.WARN)
     return false
   end
-  
+
   if state.job_id then
     -- Ensure text ends with newline
     if not text:match("\n$") then
@@ -146,7 +158,7 @@ function M.send_text(text)
     vim.api.nvim_chan_send(state.job_id, text)
     return true
   end
-  
+
   return false
 end
 
