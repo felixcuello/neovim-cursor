@@ -195,16 +195,8 @@ print(vim.inspect(state))
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-
-MIT License - see [LICENSE](LICENSE) for details
-
 ## Related Projects
 
 - [Cursor](https://cursor.sh/) - The AI-first code editor
 - [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim) - Terminal management for Neovim
 - [vim-floaterm](https://github.com/voldikss/vim-floaterm) - Floating terminal plugin
-
-## Acknowledgments
-
-Built with ❤️ for the Neovim and Cursor communities.
