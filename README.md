@@ -3,7 +3,7 @@
 A Neovim plugin to integrate the Cursor AI agent CLI directly into your editor. Toggle a terminal running `cursor agent`
 with a simple keybinding and send visual selections for AI assistance.
 
-This was created using cursor 😊 basically to met my requirements of having a cursor agent in the CLI.
+This was created using cursor 😊 in 20 minutes, it doesn't have to be perfect, just need something to run cursor agent like the agent inside cursor.
 
 
 ## Features
