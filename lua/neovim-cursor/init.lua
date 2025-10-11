@@ -16,15 +16,11 @@ function M.visual_mode_handler()
   local buf = vim.api.nvim_get_current_buf()
   local filepath = vim.api.nvim_buf_get_name(buf)
 
-  -- Get visual selection
+  -- Get visual selection line range
   local start_pos = vim.fn.getpos("'<")
   local end_pos = vim.fn.getpos("'>")
   local start_line = start_pos[2]
   local end_line = end_pos[2]
-
-  -- Get the selected lines
-  local lines = vim.api.nvim_buf_get_lines(buf, start_line - 1, end_line, false)
-  local selected_text = table.concat(lines, "\n")
 
   -- Toggle the terminal (open if closed, show if hidden)
   terminal.toggle(config)
@@ -32,8 +28,8 @@ function M.visual_mode_handler()
   -- Wait a bit for terminal to be ready, then send text
   vim.defer_fn(function()
     if terminal.is_running() then
-      -- Send the filepath with @ prefix
-      local text_to_send = "@" .. filepath .. "\n" .. selected_text
+      -- Send the filepath with @ prefix and line range (no content needed)
+      local text_to_send = "@" .. filepath .. ":" .. start_line .. "-" .. end_line
       terminal.send_text(text_to_send)
     end
   end, 100)  -- 100ms delay to ensure terminal is ready
