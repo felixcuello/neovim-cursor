@@ -5,6 +5,9 @@ local terminal = require("neovim-cursor.terminal")
 local M = {}
 local config = {}
 
+-- Plugin version (Semantic Versioning: MAJOR.MINOR.PATCH)
+M.version = "0.3.0"
+
 -- Normal mode handler: just toggle the terminal
 function M.normal_mode_handler()
   terminal.toggle(config)
@@ -74,6 +77,13 @@ function M.setup(user_config)
   end, {
     desc = "Send text to Cursor Agent terminal",
     nargs = "+",
+  })
+
+  -- Create command to display version
+  vim.api.nvim_create_user_command("CursorAgentVersion", function()
+    vim.notify("neovim-cursor v" .. M.version, vim.log.levels.INFO)
+  end, {
+    desc = "Display neovim-cursor plugin version",
   })
 end
 
