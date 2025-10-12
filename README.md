@@ -86,6 +86,7 @@ The plugin also provides user commands:
 
 - `:CursorAgent` - Toggle the Cursor agent terminal
 - `:CursorAgentSend <text>` - Send arbitrary text to the terminal
+- `:CursorAgentVersion` - Display the plugin version
 
 ## Configuration
 
@@ -156,6 +157,9 @@ You can access the terminal functions directly:
 
 ```lua
 local cursor = require("neovim-cursor")
+
+-- Access plugin version
+print("Version: " .. cursor.version)
 
 -- Toggle terminal
 cursor.normal_mode_handler()
