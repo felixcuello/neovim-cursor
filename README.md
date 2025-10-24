@@ -60,7 +60,7 @@ EOF
 ### Basic Usage
 
 1. **Open/Toggle Terminal**: Press `<leader>ai` in normal mode to open a vertical split with the Cursor agent
-2. **Hide Terminal**: Press `<leader>ai` again to hide the terminal (keeps the session running), or press `<Esc>` while in the terminal
+2. **Hide Terminal**: Press `<Esc>` or `<leader>ai` again to hide the terminal (in both cases it keeps the session running)
 3. **Show Terminal**: Press `<leader>ai` again to show the hidden terminal
 
 ### Visual Mode

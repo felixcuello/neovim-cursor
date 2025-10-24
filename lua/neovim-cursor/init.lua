@@ -6,7 +6,7 @@ local M = {}
 local config = {}
 
 -- Plugin version (Semantic Versioning: MAJOR.MINOR.PATCH)
-M.version = "0.3.0"
+M.version = "0.3.1"
 
 -- Normal mode handler: just toggle the terminal
 function M.normal_mode_handler()

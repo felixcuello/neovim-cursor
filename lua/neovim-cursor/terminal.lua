@@ -119,6 +119,13 @@ local function create(config)
     desc = "Exit terminal window"
   })
 
+  -- Set up buffer-local keymap for normal mode in terminal
+  vim.api.nvim_buf_set_keymap(state.buf, 'n', '<Esc>', ':lua require("neovim-cursor.terminal").hide()<CR>', {
+    noremap = true,
+    silent = true,
+    desc = "Hide terminal window"
+  })
+
   -- Enter insert mode in terminal
   vim.cmd("startinsert")
 
