@@ -33,6 +33,18 @@ function M.new_terminal_handler()
   tabs.create_terminal(nil, config)
 end
 
+-- Handler for creating a new terminal from within terminal mode
+-- Hides current terminal first, then creates a new one
+function M.new_terminal_from_terminal_handler()
+  -- Hide the current terminal
+  terminal.hide()
+
+  -- Schedule the new terminal creation to happen after hiding completes
+  vim.schedule(function()
+    M.new_terminal_handler()
+  end)
+end
+
 -- Handler for selecting a terminal from picker
 function M.select_terminal_handler()
   picker.pick_terminal(config, function(selected_id)

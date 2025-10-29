@@ -175,6 +175,14 @@ local function create_terminal_instance(id, config)
     desc = "Hide terminal window"
   })
 
+  -- Set up buffer-local keymap for creating new terminal from terminal mode
+  -- First hide current terminal, then create new one
+  vim.api.nvim_buf_set_keymap(term.buf, 't', '<C-n>', '<C-\\><C-n>:lua require("neovim-cursor").new_terminal_from_terminal_handler()<CR>', {
+    noremap = true,
+    silent = true,
+    desc = "Create new agent terminal (hide current first)"
+  })
+
   -- Enter insert mode in terminal
   vim.cmd("startinsert")
 
