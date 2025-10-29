@@ -1,11 +1,25 @@
 -- Terminal management for neovim-cursor plugin
+--
+-- This module handles the low-level terminal operations:
+-- - Creating terminal buffers and windows
+-- - Managing terminal visibility (show/hide)
+-- - Sending text to terminal buffers
+-- - Terminal lifecycle (on_exit callbacks)
+-- - Terminal mode keybindings (<Esc>, <C-n>, <C-t>, <C-r>)
+--
+-- Architecture:
+-- - Stores terminal instances with buffers, windows, and job IDs
+-- - Supports multiple terminals with unique IDs
+-- - Cleanup callbacks notify tabs.lua when terminals exit
+-- - Buffer-local keybindings are set up for each terminal
+--
 local M = {}
 
 -- State tracking for multiple terminals
-local terminals = {}  -- Table of terminal instances keyed by ID
+local terminals = {}  -- Table of terminal instances keyed by ID (stores buf, win, job_id)
 local active_id = nil  -- Currently active terminal ID
 local default_id = "default"  -- Default terminal ID for backward compatibility
-local cleanup_callbacks = {}  -- Callbacks to call when a terminal exits
+local cleanup_callbacks = {}  -- Callbacks to call when a terminal exits (used by tabs.lua for state sync)
 
 -- Get a terminal instance by ID (defaults to active or default terminal)
 local function get_terminal(id)

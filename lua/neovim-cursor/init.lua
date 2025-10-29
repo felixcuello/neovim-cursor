@@ -1,4 +1,18 @@
 -- Main module for neovim-cursor plugin
+--
+-- This is the entry point for the plugin, providing:
+-- - Plugin setup and configuration
+-- - User-facing handlers for all operations (normal/visual mode, terminal operations)
+-- - Keybinding and command registration
+-- - Integration between config, terminal, tabs, and picker modules
+--
+-- Key handlers:
+-- - normal_mode_handler(): Smart toggle (create first terminal or show last active)
+-- - visual_mode_handler(): Send visual selection to active agent
+-- - new_terminal_handler(): Create new agent terminal with prompt
+-- - select_terminal_handler(): Open fuzzy picker to select agent
+-- - rename_terminal_handler(): Rename active agent
+--
 local config_module = require("neovim-cursor.config")
 local terminal = require("neovim-cursor.terminal")
 local tabs = require("neovim-cursor.tabs")
@@ -8,7 +22,8 @@ local M = {}
 local config = {}
 
 -- Plugin version (Semantic Versioning: MAJOR.MINOR.PATCH)
-M.version = "0.4.0"
+-- v1.0.0: Multi-terminal support with fuzzy picker, live preview, and full configurability
+M.version = "1.0.0"
 
 -- Normal mode handler: smart toggle (create first terminal or show last active)
 function M.normal_mode_handler()
@@ -95,35 +110,6 @@ function M.rename_terminal_handler()
   end)
 end
 
--- Handler for closing a terminal
-function M.close_terminal_handler(terminal_id)
-  local id_to_close = terminal_id or tabs.get_active()
-  
-  if not id_to_close then
-    vim.notify("No terminal to close", vim.log.levels.WARN)
-    return
-  end
-  
-  local term = tabs.get_terminal(id_to_close)
-  if not term then
-    vim.notify("Terminal not found", vim.log.levels.ERROR)
-    return
-  end
-  
-  -- Ask for confirmation
-  vim.ui.select({"Yes", "No"}, {
-    prompt = string.format("Close terminal '%s'?", term.name),
-  }, function(choice)
-    if choice == "Yes" then
-      if tabs.delete_terminal(id_to_close) then
-        vim.notify("Terminal closed: " .. term.name, vim.log.levels.INFO)
-      else
-        vim.notify("Failed to close terminal", vim.log.levels.ERROR)
-      end
-    end
-  end)
-end
-
 -- Handler for listing all terminals
 function M.list_terminals_handler()
   local terminals = tabs.list_terminals()
@@ -199,13 +185,21 @@ function M.setup(user_config)
   -- Merge user config with defaults
   config = config_module.setup(user_config)
 
-  -- Set up keybindings for toggle (existing <leader>ai)
-  vim.keymap.set("n", config.keybinding, M.normal_mode_handler, {
+  -- Support backward compatibility: if keybindings table not provided, use old keybinding
+  local keybindings = config.keybindings or {
+    toggle = config.keybinding or "<leader>ai",
+    new = "<leader>an",
+    select = "<leader>at",
+    rename = "<leader>ar",
+  }
+
+  -- Set up keybindings for toggle
+  vim.keymap.set("n", keybindings.toggle, M.normal_mode_handler, {
     desc = "Toggle Cursor Agent terminal",
     silent = true,
   })
 
-  vim.keymap.set("v", config.keybinding, function()
+  vim.keymap.set("v", keybindings.toggle, function()
     -- Exit visual mode before processing
     local esc = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
     vim.api.nvim_feedkeys(esc, "x", false)
@@ -216,27 +210,21 @@ function M.setup(user_config)
     silent = true,
   })
 
-  -- New keybinding for creating a new terminal (<leader>an)
-  vim.keymap.set("n", "<leader>an", M.new_terminal_handler, {
+  -- Keybinding for creating a new terminal
+  vim.keymap.set("n", keybindings.new, M.new_terminal_handler, {
     desc = "Create new Cursor Agent terminal",
     silent = true,
   })
 
-  -- New keybinding for selecting a terminal (<leader>at)
-  vim.keymap.set("n", "<leader>at", M.select_terminal_handler, {
+  -- Keybinding for selecting a terminal
+  vim.keymap.set("n", keybindings.select, M.select_terminal_handler, {
     desc = "Select Cursor Agent terminal",
     silent = true,
   })
 
-  -- New keybinding for renaming a terminal (<leader>ar)
-  vim.keymap.set("n", "<leader>ar", M.rename_terminal_handler, {
+  -- Keybinding for renaming a terminal
+  vim.keymap.set("n", keybindings.rename, M.rename_terminal_handler, {
     desc = "Rename Cursor Agent terminal",
-    silent = true,
-  })
-
-  -- New keybinding for closing a terminal (<leader>ax)
-  vim.keymap.set("n", "<leader>ax", M.close_terminal_handler, {
-    desc = "Close Cursor Agent terminal",
     silent = true,
   })
 
@@ -282,20 +270,6 @@ function M.setup(user_config)
     end
   end, {
     desc = "Rename Cursor Agent terminal",
-    nargs = "?",
-  })
-
-  -- Create command to close terminal
-  vim.api.nvim_create_user_command("CursorAgentClose", function(opts)
-    -- If argument provided, try to parse it as terminal ID or index
-    if opts.args and opts.args ~= "" then
-      -- For now, just close active terminal (can be enhanced later)
-      M.close_terminal_handler()
-    else
-      M.close_terminal_handler()
-    end
-  end, {
-    desc = "Close Cursor Agent terminal",
     nargs = "?",
   })
 

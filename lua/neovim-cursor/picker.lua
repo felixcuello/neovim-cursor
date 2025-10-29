@@ -1,4 +1,17 @@
 -- Terminal picker for neovim-cursor plugin
+--
+-- Provides fuzzy finder UI for selecting agent terminals with:
+-- - Telescope integration (preferred) with live preview of agent conversations
+-- - vim.ui.select fallback for users without Telescope
+-- - Rename capability directly from picker with <C-r>
+-- - Automatic return to terminal insert mode after selection
+--
+-- Features:
+-- - Live preview showing terminal buffer content
+-- - Status indicators (running/stopped, age)
+-- - Fuzzy search by agent name
+-- - Picker automatically reopens after rename for seamless workflow
+--
 local tabs = require("neovim-cursor.tabs")
 local terminal = require("neovim-cursor.terminal")
 

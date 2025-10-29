@@ -9,8 +9,12 @@ This was created using cursor 😊 in 20 minutes, it doesn't have to be perfect,
 ## Features
 
 - 🚀 Toggle a vertical split terminal running `cursor agent` with `<leader>ai`
+- 🎛️ **Manage multiple AI agent sessions simultaneously**
+- 🔍 **Fuzzy finder with live preview** (Telescope integration)
+- ✏️ **Rename and organize** agent terminals for different tasks
+- ⌨️ **Full terminal mode support** - manage agents without leaving the terminal
 - 📝 Send visual selections and file paths to the Cursor agent
-- 💾 Persistent terminal session (hide/show without restarting)
+- 💾 Persistent terminal sessions (hide/show without restarting)
 - ⚙️ Fully configurable (keybindings, split position, size, etc.)
 - 🎯 Written in pure Lua
 
@@ -57,36 +61,85 @@ EOF
 
 ## Usage
 
-### Basic Usage
+### Quick Start
 
-1. **Open/Toggle Terminal**: Press `<leader>ai` in normal mode to open a vertical split with the Cursor agent
-2. **Hide Terminal**: Press `<Esc>` or `<leader>ai` again to hide the terminal (in both cases it keeps the session running)
-3. **Show Terminal**: Press `<leader>ai` again to show the hidden terminal
+1. **Open/Toggle Agent**: Press `<leader>ai` in normal mode
+   - First time: Creates your first agent terminal
+   - After that: Toggles (show/hide) the last active agent
+2. **Create New Agent**: Press `<leader>an` to create additional agent terminals
+3. **Switch Agents**: Press `<leader>at` to open a fuzzy picker with live preview
+4. **Rename Agent**: Press `<leader>ar` to rename the current agent terminal
+
+### Multi-Terminal Management
+
+Work with multiple AI agents simultaneously for different tasks:
+
+#### From Normal Mode
+
+| Keybinding | Action |
+|------------|--------|
+| `<leader>ai` | Smart toggle - create first agent or show last active |
+| `<leader>an` | Create new agent terminal with custom prompt |
+| `<leader>at` | Select agent from fuzzy picker (with live preview) |
+| `<leader>ar` | Rename current agent terminal |
+
+#### From Terminal Mode
+
+When you're inside an agent terminal, you can manage agents without leaving:
+
+| Keybinding | Action |
+|------------|--------|
+| `<Esc>` | Exit terminal mode / hide agent window |
+| `<C-n>` | Create new agent terminal |
+| `<C-t>` | Select agent from fuzzy picker |
+| `<C-r>` | Rename current agent terminal |
+
+#### Example Workflow
+
+```
+1. Press <leader>ai → Creates "Agent 1"
+2. Ask: "Help me debug this authentication issue"
+3. Press <C-n> → Prompt appears
+4. Type: "Review my database schema"
+5. Now you have two agents running!
+6. Press <C-t> → Telescope shows both with live preview
+7. Navigate and press Enter to switch
+8. Press <C-r> → Rename to "Auth Debug" and "Schema Review"
+```
 
 ### Visual Mode
+
+Send code selections to your active agent:
 
 1. Select text in visual mode (v, V, or Ctrl-v)
 2. Press `<leader>ai`
 3. The plugin will:
-   - Toggle the terminal (open/show it)
-   - Send the file path with `@` prefix
-   - Send the selected text
+   - Toggle the agent terminal (show it)
+   - Send the file path with line range (e.g., `@file.lua:10-20`)
 
-Example output sent to terminal:
+Example:
 ```
-@/path/to/your/file.lua
-function hello()
-  print("Hello, world!")
-end
+@/path/to/your/file.lua:10-15
 ```
+
+The agent will have context about which file and lines you're referring to.
 
 ### Commands
 
-The plugin also provides user commands:
+The plugin provides comprehensive commands for all operations:
 
-- `:CursorAgent` - Toggle the Cursor agent terminal
-- `:CursorAgentSend <text>` - Send arbitrary text to the terminal
-- `:CursorAgentVersion` - Display the plugin version
+#### Terminal Management
+- `:CursorAgent` - Toggle agent terminal (smart toggle)
+- `:CursorAgentNew [prompt]` - Create new agent terminal with optional initial prompt
+- `:CursorAgentSelect` - Open agent picker
+- `:CursorAgentRename [name]` - Rename active agent (interactive if no argument)
+- `:CursorAgentList` - List all agent terminals with status
+
+> **Note:** To close an agent terminal, simply type `exit` in the terminal or press `Ctrl+D`
+
+#### Utilities
+- `:CursorAgentSend <text>` - Send arbitrary text to active agent
+- `:CursorAgentVersion` - Display plugin version
 
 ## Configuration
 
@@ -94,8 +147,19 @@ The plugin also provides user commands:
 
 ```lua
 require("neovim-cursor").setup({
-  -- Keybinding for toggling cursor agent
-  keybinding = "<leader>ai",
+  -- Multi-terminal keybindings (all configurable)
+  keybindings = {
+    toggle = "<leader>ai",      -- Toggle agent window (show last active)
+    new = "<leader>an",          -- Create new agent terminal
+    select = "<leader>at",       -- Select agent terminal (fuzzy picker)
+    rename = "<leader>ar",       -- Rename current agent terminal
+  },
+
+  -- Terminal naming configuration
+  terminal = {
+    default_name = "Agent",      -- Default name prefix for terminals
+    auto_number = true,          -- Auto-append numbers (Agent 1, Agent 2, etc.)
+  },
 
   -- Terminal split configuration
   split = {
@@ -122,7 +186,31 @@ require("neovim-cursor").setup({
 
 ### Custom Configuration Examples
 
-#### Left split with 40% width
+#### Custom Keybindings
+
+```lua
+require("neovim-cursor").setup({
+  keybindings = {
+    toggle = "<C-a>",       -- Use Ctrl+a for toggle
+    new = "<C-n>",          -- Use Ctrl+n for new terminal
+    select = "<C-s>",       -- Use Ctrl+s for select
+    rename = "<leader>rn",  -- Use <leader>rn for rename
+  },
+})
+```
+
+#### Custom Terminal Names
+
+```lua
+require("neovim-cursor").setup({
+  terminal = {
+    default_name = "AI Assistant",  -- Custom prefix
+    auto_number = true,              -- "AI Assistant 1", "AI Assistant 2", etc.
+  },
+})
+```
+
+#### Left Split with 40% Width
 
 ```lua
 require("neovim-cursor").setup({
@@ -133,19 +221,21 @@ require("neovim-cursor").setup({
 })
 ```
 
-#### Custom keybinding
-
-```lua
-require("neovim-cursor").setup({
-  keybinding = "<C-a>",  -- Use Ctrl+a instead
-})
-```
-
-#### Custom command with arguments
+#### Custom Command with Arguments
 
 ```lua
 require("neovim-cursor").setup({
   command = "cursor agent --model gpt-4",
+})
+```
+
+#### Backward Compatibility
+
+The old `keybinding` option is still supported for backward compatibility:
+
+```lua
+require("neovim-cursor").setup({
+  keybinding = "<leader>ai",  -- Still works, sets the toggle keybinding
 })
 ```
 
@@ -164,18 +254,80 @@ print("Version: " .. cursor.version)
 -- Toggle terminal
 cursor.normal_mode_handler()
 
--- Send text programmatically
+-- Create new terminal programmatically
+cursor.new_terminal_handler()
+
+-- Send text to active terminal
 cursor.terminal.send_text("@myfile.lua\nExplain this code")
 
 -- Check if terminal is running
-if cursor.terminal.is_running() then
+local terminal_id = cursor.tabs.get_active()
+if cursor.terminal.is_running(terminal_id) then
   print("Terminal is running")
 end
 
+-- List all terminals
+local terminals = cursor.tabs.list_terminals()
+for _, term in ipairs(terminals) do
+  print(string.format("%s: %s", term.id, term.name))
+end
+
 -- Get terminal state (for debugging)
-local state = cursor.terminal.get_state()
+local state = cursor.tabs.get_state()
 print(vim.inspect(state))
 ```
+
+### Multi-Terminal API
+
+```lua
+local tabs = require("neovim-cursor.tabs")
+
+-- Get active terminal ID
+local active_id = tabs.get_active()
+
+-- Get terminal metadata
+local term = tabs.get_terminal(active_id)
+print("Name: " .. term.name)
+print("Created: " .. term.created_at)
+
+-- Rename a terminal
+tabs.rename_terminal(active_id, "New Name")
+
+-- Delete a terminal
+tabs.delete_terminal(active_id)
+
+-- Check if any terminals exist
+if tabs.has_terminals() then
+  print("Terminals count: " .. tabs.count())
+end
+```
+
+## Tips & Best Practices
+
+### Organizing Your Agents
+
+Use descriptive names to organize agents by task:
+- **"Backend API"** - for backend code questions
+- **"Frontend UI"** - for UI/UX implementation
+- **"Debug Session"** - for troubleshooting
+- **"Code Review"** - for reviewing pull requests
+- **"Documentation"** - for writing docs
+
+### Efficient Workflows
+
+1. **Keep agents focused**: Create separate agents for different contexts instead of mixing topics in one
+2. **Use terminal mode shortcuts**: Stay in terminal mode with `<C-n>`, `<C-t>`, `<C-r>` for faster navigation
+3. **Leverage the preview**: Use `<C-t>` to preview conversations before switching
+4. **Name early**: Rename agents as soon as you know their purpose with `<C-r>`
+
+### Telescope Integration
+
+For the best experience, install [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim). The picker will:
+- Show live preview of agent conversations
+- Support fuzzy searching by agent name
+- Allow renaming directly from the picker with `<C-r>`
+
+Without Telescope, the plugin falls back to `vim.ui.select` (still functional, just less features).
 
 ## Troubleshooting
 

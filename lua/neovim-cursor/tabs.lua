@@ -1,14 +1,26 @@
 -- Multi-terminal state management for neovim-cursor plugin
+--
+-- This module manages the metadata for multiple agent terminals, providing:
+-- - Terminal creation and deletion
+-- - Active/last terminal tracking for smart toggling
+-- - Terminal renaming and listing
+-- - Automatic cleanup via callbacks from terminal.lua
+--
+-- Architecture:
+-- - This module stores metadata (id, name, timestamps) only
+-- - The actual terminal buffers/windows are managed by terminal.lua
+-- - Cleanup callbacks ensure state stays synchronized when terminals exit
+--
 local terminal = require("neovim-cursor.terminal")
 
 local M = {}
 
--- State
+-- State: Centralized storage for all terminal metadata
 local state = {
   terminals = {},      -- Table of terminal metadata keyed by ID
-  active_id = nil,     -- Currently active terminal ID
-  last_id = nil,       -- Last active terminal ID (for toggle)
-  counter = 0,         -- Counter for generating unique IDs
+  active_id = nil,     -- Currently active terminal ID (shown in window)
+  last_id = nil,       -- Last active terminal ID (used for smart toggle with <leader>ai)
+  counter = 0,         -- Counter for generating unique IDs (increments for each new terminal)
 }
 
 -- Register cleanup callback to sync when terminals exit
