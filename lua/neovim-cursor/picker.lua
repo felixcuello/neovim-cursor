@@ -52,6 +52,7 @@ local function pick_with_telescope(terminals, config, callback)
   local conf = require("telescope.config").values
   local actions = require("telescope.actions")
   local action_state = require("telescope.actions.state")
+  local previewers = require("telescope.previewers")
   
   -- Build entries for telescope
   local entries = {}
@@ -63,7 +64,34 @@ local function pick_with_telescope(terminals, config, callback)
       value = term,
     })
   end
-  
+
+  -- Create a custom previewer for terminal buffers
+  local terminal_previewer = previewers.new_buffer_previewer({
+    title = "Agent Conversation",
+    define_preview = function(self, entry, status)
+      -- Get the terminal info
+      local term_info = terminal._get_terminal(entry.id)
+
+      if term_info and term_info.buf and vim.api.nvim_buf_is_valid(term_info.buf) then
+        -- Get terminal buffer lines
+        local lines = vim.api.nvim_buf_get_lines(term_info.buf, 0, -1, false)
+
+        -- Set lines in preview buffer
+        vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
+
+        -- Optional: Set filetype for syntax highlighting
+        vim.api.nvim_buf_set_option(self.state.bufnr, 'filetype', 'terminal')
+      else
+        -- Terminal not running or buffer invalid
+        vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, {
+          "Terminal not running",
+          "",
+          "Status: " .. (terminal.is_running(entry.id) and "running" or "stopped")
+        })
+      end
+    end,
+  })
+
   pickers.new({}, {
     prompt_title = "Select Cursor Agent Terminal",
     finder = finders.new_table({
@@ -78,6 +106,7 @@ local function pick_with_telescope(terminals, config, callback)
       end,
     }),
     sorter = conf.generic_sorter({}),
+    previewer = terminal_previewer,
     attach_mappings = function(prompt_bufnr, map)
       -- Default action: select terminal
       actions.select_default:replace(function()
