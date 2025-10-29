@@ -190,6 +190,13 @@ local function create_terminal_instance(id, config)
     desc = "Rename current agent window"
   })
 
+  -- Set up buffer-local keymap for selecting terminal from terminal mode
+  vim.api.nvim_buf_set_keymap(term.buf, 't', '<C-t>', '<C-\\><C-n>:lua require("neovim-cursor").select_terminal_handler()<CR>', {
+    noremap = true,
+    silent = true,
+    desc = "Select agent terminal"
+  })
+
   -- Enter insert mode in terminal
   vim.cmd("startinsert")
 
