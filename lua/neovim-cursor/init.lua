@@ -67,7 +67,7 @@ function M.rename_terminal_handler()
   local current_name = term and term.name or ""
   
   vim.ui.input({
-    prompt = "Enter new terminal name: ",
+    prompt = "Rename agent window: ",
     default = current_name,
   }, function(input)
     if input and input ~= "" then

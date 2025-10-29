@@ -98,7 +98,7 @@ local function pick_with_telescope(terminals, config, callback)
           -- Prompt for new name
           vim.schedule(function()
             vim.ui.input({
-              prompt = "Enter new terminal name: ",
+              prompt = "Rename agent window: ",
               default = term.name,
             }, function(input)
               if input and input ~= "" then
@@ -127,7 +127,7 @@ local function pick_with_telescope(terminals, config, callback)
           -- Prompt for new name
           vim.schedule(function()
             vim.ui.input({
-              prompt = "Enter new terminal name: ",
+              prompt = "Rename agent window: ",
               default = term.name,
             }, function(input)
               if input and input ~= "" then
