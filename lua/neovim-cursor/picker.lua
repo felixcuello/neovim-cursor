@@ -39,8 +39,9 @@ end
 
 -- Pick terminal using Telescope (if available)
 -- @param terminals Array of terminal metadata
+-- @param config Configuration object
 -- @param callback function(selected_id) Called with selected terminal ID
-local function pick_with_telescope(terminals, callback)
+local function pick_with_telescope(terminals, config, callback)
   local ok, telescope = pcall(require, "telescope")
   if not ok then
     return false
@@ -78,6 +79,7 @@ local function pick_with_telescope(terminals, callback)
     }),
     sorter = conf.generic_sorter({}),
     attach_mappings = function(prompt_bufnr, map)
+      -- Default action: select terminal
       actions.select_default:replace(function()
         actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
@@ -85,6 +87,65 @@ local function pick_with_telescope(terminals, callback)
           callback(selection.id)
         end
       end)
+      
+      -- Custom action: rename terminal with <C-r>
+      map("i", "<C-r>", function()
+        local selection = action_state.get_selected_entry()
+        if selection then
+          local term = selection.value
+          actions.close(prompt_bufnr)
+          
+          -- Prompt for new name
+          vim.schedule(function()
+            vim.ui.input({
+              prompt = "Enter new terminal name: ",
+              default = term.name,
+            }, function(input)
+              if input and input ~= "" then
+                if tabs.rename_terminal(selection.id, input) then
+                  vim.notify("Terminal renamed to: " .. input, vim.log.levels.INFO)
+                  -- Re-open picker to show updated names
+                  vim.schedule(function()
+                    M.pick_terminal(config, callback)
+                  end)
+                else
+                  vim.notify("Failed to rename terminal", vim.log.levels.ERROR)
+                end
+              end
+            end)
+          end)
+        end
+      end)
+      
+      -- Also map <C-r> in normal mode for Telescope
+      map("n", "<C-r>", function()
+        local selection = action_state.get_selected_entry()
+        if selection then
+          local term = selection.value
+          actions.close(prompt_bufnr)
+          
+          -- Prompt for new name
+          vim.schedule(function()
+            vim.ui.input({
+              prompt = "Enter new terminal name: ",
+              default = term.name,
+            }, function(input)
+              if input and input ~= "" then
+                if tabs.rename_terminal(selection.id, input) then
+                  vim.notify("Terminal renamed to: " .. input, vim.log.levels.INFO)
+                  -- Re-open picker to show updated names
+                  vim.schedule(function()
+                    M.pick_terminal(config, callback)
+                  end)
+                else
+                  vim.notify("Failed to rename terminal", vim.log.levels.ERROR)
+                end
+              end
+            end)
+          end)
+        end
+      end)
+      
       return true
     end,
   }):find()
@@ -138,7 +199,7 @@ function M.pick_terminal(config, callback)
   
   -- Try Telescope first, fall back to vim.ui.select
   if has_telescope() then
-    local success = pick_with_telescope(terminals, callback)
+    local success = pick_with_telescope(terminals, config, callback)
     if success then
       return
     end
