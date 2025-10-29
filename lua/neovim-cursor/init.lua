@@ -42,6 +42,97 @@ function M.select_terminal_handler()
   end)
 end
 
+-- Handler for renaming the active terminal
+function M.rename_terminal_handler()
+  local active_id = tabs.get_active()
+  
+  if not active_id then
+    vim.notify("No active terminal to rename. Create one with <leader>an", vim.log.levels.WARN)
+    return
+  end
+  
+  local term = tabs.get_terminal(active_id)
+  local current_name = term and term.name or ""
+  
+  vim.ui.input({
+    prompt = "Enter new terminal name: ",
+    default = current_name,
+  }, function(input)
+    if input and input ~= "" then
+      if tabs.rename_terminal(active_id, input) then
+        vim.notify("Terminal renamed to: " .. input, vim.log.levels.INFO)
+      else
+        vim.notify("Failed to rename terminal", vim.log.levels.ERROR)
+      end
+    end
+  end)
+end
+
+-- Handler for closing a terminal
+function M.close_terminal_handler(terminal_id)
+  local id_to_close = terminal_id or tabs.get_active()
+  
+  if not id_to_close then
+    vim.notify("No terminal to close", vim.log.levels.WARN)
+    return
+  end
+  
+  local term = tabs.get_terminal(id_to_close)
+  if not term then
+    vim.notify("Terminal not found", vim.log.levels.ERROR)
+    return
+  end
+  
+  -- Ask for confirmation
+  vim.ui.select({"Yes", "No"}, {
+    prompt = string.format("Close terminal '%s'?", term.name),
+  }, function(choice)
+    if choice == "Yes" then
+      if tabs.delete_terminal(id_to_close) then
+        vim.notify("Terminal closed: " .. term.name, vim.log.levels.INFO)
+      else
+        vim.notify("Failed to close terminal", vim.log.levels.ERROR)
+      end
+    end
+  end)
+end
+
+-- Handler for listing all terminals
+function M.list_terminals_handler()
+  local terminals = tabs.list_terminals()
+  
+  if #terminals == 0 then
+    vim.notify("No terminals available. Create one with <leader>an", vim.log.levels.INFO)
+    return
+  end
+  
+  local active_id = tabs.get_active()
+  local lines = {"Cursor Agent Terminals:", ""}
+  
+  for i, term in ipairs(terminals) do
+    local status = terminal.is_running(term.id) and "running" or "stopped"
+    local active_marker = (term.id == active_id) and "? " or "  "
+    local age_seconds = os.time() - term.created_at
+    local age_str
+    
+    if age_seconds < 60 then
+      age_str = age_seconds .. "s"
+    elseif age_seconds < 3600 then
+      age_str = math.floor(age_seconds / 60) .. "m"
+    else
+      age_str = math.floor(age_seconds / 3600) .. "h"
+    end
+    
+    table.insert(lines, string.format("%s%d. %s [%s] (created %s ago)", 
+      active_marker, i, term.name, status, age_str))
+  end
+  
+  table.insert(lines, "")
+  table.insert(lines, string.format("Total: %d terminal(s)", #terminals))
+  
+  vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
+end
+
 -- Visual mode handler: toggle terminal and send selection
 function M.visual_mode_handler()
   -- Get the current buffer and file path
@@ -110,6 +201,18 @@ function M.setup(user_config)
     silent = true,
   })
 
+  -- New keybinding for renaming a terminal (<leader>ar)
+  vim.keymap.set("n", "<leader>ar", M.rename_terminal_handler, {
+    desc = "Rename Cursor Agent terminal",
+    silent = true,
+  })
+
+  -- New keybinding for closing a terminal (<leader>ax)
+  vim.keymap.set("n", "<leader>ax", M.close_terminal_handler, {
+    desc = "Close Cursor Agent terminal",
+    silent = true,
+  })
+
   -- Create user command for toggle
   vim.api.nvim_create_user_command("CursorAgent", function()
     M.normal_mode_handler()
@@ -131,6 +234,49 @@ function M.setup(user_config)
     M.select_terminal_handler()
   end, {
     desc = "Select Cursor Agent terminal",
+  })
+
+  -- Create command to rename terminal
+  vim.api.nvim_create_user_command("CursorAgentRename", function(opts)
+    local active_id = tabs.get_active()
+    if not active_id then
+      vim.notify("No active terminal to rename", vim.log.levels.WARN)
+      return
+    end
+    
+    if opts.args and opts.args ~= "" then
+      -- Name provided as argument
+      if tabs.rename_terminal(active_id, opts.args) then
+        vim.notify("Terminal renamed to: " .. opts.args, vim.log.levels.INFO)
+      end
+    else
+      -- No argument, use the interactive handler
+      M.rename_terminal_handler()
+    end
+  end, {
+    desc = "Rename Cursor Agent terminal",
+    nargs = "?",
+  })
+
+  -- Create command to close terminal
+  vim.api.nvim_create_user_command("CursorAgentClose", function(opts)
+    -- If argument provided, try to parse it as terminal ID or index
+    if opts.args and opts.args ~= "" then
+      -- For now, just close active terminal (can be enhanced later)
+      M.close_terminal_handler()
+    else
+      M.close_terminal_handler()
+    end
+  end, {
+    desc = "Close Cursor Agent terminal",
+    nargs = "?",
+  })
+
+  -- Create command to list terminals
+  vim.api.nvim_create_user_command("CursorAgentList", function()
+    M.list_terminals_handler()
+  end, {
+    desc = "List all Cursor Agent terminals",
   })
 
   -- Create command to send text manually
