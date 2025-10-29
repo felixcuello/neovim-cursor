@@ -66,6 +66,10 @@ function M.rename_terminal_handler()
   local term = tabs.get_terminal(active_id)
   local current_name = term and term.name or ""
   
+  -- Check if we're currently in a terminal buffer
+  local current_buf = vim.api.nvim_get_current_buf()
+  local is_terminal_buf = vim.bo[current_buf].buftype == "terminal"
+
   vim.ui.input({
     prompt = "Rename agent window: ",
     default = current_name,
@@ -73,9 +77,20 @@ function M.rename_terminal_handler()
     if input and input ~= "" then
       if tabs.rename_terminal(active_id, input) then
         vim.notify("Terminal renamed to: " .. input, vim.log.levels.INFO)
+        -- If we were in a terminal buffer, go back to insert mode
+        if is_terminal_buf then
+          vim.schedule(function()
+            vim.cmd("startinsert")
+          end)
+        end
       else
         vim.notify("Failed to rename terminal", vim.log.levels.ERROR)
       end
+    elseif is_terminal_buf then
+      -- User cancelled, but if we were in terminal, go back to insert mode
+      vim.schedule(function()
+        vim.cmd("startinsert")
+      end)
     end
   end)
 end

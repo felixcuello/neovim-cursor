@@ -85,6 +85,10 @@ local function pick_with_telescope(terminals, config, callback)
         local selection = action_state.get_selected_entry()
         if selection then
           callback(selection.id)
+          -- Enter insert mode in the terminal after switching
+          vim.schedule(function()
+            vim.cmd("startinsert")
+          end)
         end
       end)
       
@@ -174,6 +178,10 @@ local function pick_with_ui_select(terminals, callback)
   }, function(choice, idx)
     if idx then
       callback(id_map[idx])
+      -- Enter insert mode in the terminal after switching
+      vim.schedule(function()
+        vim.cmd("startinsert")
+      end)
     end
   end)
 end
